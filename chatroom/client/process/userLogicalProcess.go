@@ -30,7 +30,7 @@ func (up *UserProcess) SignIn() error {
 	}
 
 	//连接到server
-	conn, err := net.Dial("tcp", "localhost:9999")
+	conn, err := net.Dial("tcp", "114.116.245.71:9999")
 	if err != nil {
 		fmt.Println("the net Dial error=", err)
 		return err
@@ -164,7 +164,7 @@ func (up *UserProcess) SignUp() error {
 	}
 
 	//连接到server
-	conn, err := net.Dial("tcp", "localhost:9999")
+	conn, err := net.Dial("tcp", "114.116.245.71:9999")
 	if err != nil {
 		fmt.Println("the net Dial error=", err)
 		return err
@@ -245,7 +245,7 @@ func (up *UserProcess) SignUp() error {
 // Logoff 实现注销功能
 func (up *UserProcess) Logoff(userId int) error {
 	//连接到server
-	conn, err := net.Dial("tcp", "localhost:9999")
+	conn, err := net.Dial("tcp", "114.116.245.71:9999")
 	if err != nil {
 		fmt.Println("the net Dial error=", err)
 		return err

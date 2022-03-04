@@ -18,7 +18,7 @@ func (sp *ServerProcess) KeepConn() {
 		Conn: sp.Conn,
 	}
 	for {
-		fmt.Println("client waiting for server message")
+		//fmt.Println("client waiting for server message")
 		mes, err := tf.ReadPkg()
 		if err != nil {
 			fmt.Println("tf.ReadPkg error=", err)
@@ -38,6 +38,12 @@ func (sp *ServerProcess) KeepConn() {
 			updateUserStatus(&userStateChangeMes)
 		case message.SmsMesType: //群发消息
 			outputGroupMes(&mes)
+		case message.P2pSmsMesType:
+			err := outputPersonalMes(&mes)
+			if err != nil {
+				fmt.Println("outputPersonalMes error=", err)
+				return
+			}
 		default:
 			fmt.Println("Unknown message type")
 		}

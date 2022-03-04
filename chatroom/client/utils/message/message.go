@@ -1,14 +1,17 @@
 package message
 
 const (
+	//登录
 	LoginMesType    = "LoginMes"
 	LoginResMesType = "LoginResMes"
-
+	//注册
 	RegisterMesType    = "RegisterMes"
 	RegisterResMesType = "RegisterResMes"
-
+	//用户状态
 	UserStateChangesMesType = "UserStateChangesMes"
-	SmsMesType              = "SmsMes"
+	//聊天
+	SmsMesType    = "SmsMes"    //群聊
+	P2pSmsMesType = "P2pSmsMes" //点对点
 )
 
 //用户状态常量
@@ -59,10 +62,16 @@ type UserStateChangesMes struct {
 	Status int `json:"status"`  //用户状态
 }
 
-// SmsMes 增加一个SmsMes //发送的message
+// SmsMes 群聊消息类型 //发送的message
 type SmsMes struct {
 	Content string `json:"content"` //发送的消息内容
 	User           //匿名结构体，继承
 }
 
 //SmsResMes
+
+// P2pSmsMes 点对点消息类型
+type P2pSmsMes struct {
+	UserIdByOther int //指定要发消息的对象的UserId
+	SmsMes
+}

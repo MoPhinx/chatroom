@@ -18,8 +18,9 @@ type UserProcess struct {
 
 // UserStateChanges 通知所有在线用户的func
 func (p *UserProcess) UserStateChanges(userId int) {
+	//userManage.UpdateUM()
 	//遍历onlineusers，然后一个个发送UserStateChangesMes
-	for id, up := range userManage.onlineUsers {
+	for id, up := range userManage.onlineUsersId {
 		if id == userId {
 			continue
 		}
@@ -105,7 +106,7 @@ func (up *UserProcess) ProcessLogin(mes *message.Message) (err error) {
 		//通知其它用户，有人上线了，并发送更新的上线列表
 		up.UserStateChanges(loginMes.UserId)
 		//将登录成功的用户的Id放入到loginResMes.Users 切片中
-		for id, _ := range userManage.onlineUsers {
+		for id, _ := range userManage.onlineUsersId {
 			loginResMes.Users = append(loginResMes.Users, id)
 		}
 	}

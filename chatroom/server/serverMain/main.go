@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/gomodule/redigo/redis"
 	"happiness999.cn/chatroom/server/model"
 	"happiness999.cn/chatroom/server/process"
 	"net"
@@ -42,6 +43,18 @@ func main() {
 }
 
 func initUserDao() {
-
 	model.MyUserDao = model.NewUserDao(pool)
+}
+
+var pool *redis.Pool
+
+func initPool(address string, maxIdle, maxActive int, idleTimeout time.Duration) {
+	pool = &redis.Pool{
+		Dial: func() (redis.Conn, error) {
+			return redis.Dial("tcp", address)
+		},
+		MaxIdle:     maxIdle,
+		MaxActive:   maxActive,
+		IdleTimeout: idleTimeout,
+	}
 }

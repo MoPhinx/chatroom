@@ -60,7 +60,16 @@ func (p *Processor) KindOfMes(mes *message.Message) (err error) {
 	case message.SmsMesType:
 		//创建一个SmsProcess的实例，完成转发群聊消息的任务
 		smSProcess := SmSProcess{}
-		smSProcess.ForwardMes(mes)
+		err := smSProcess.ForwardMesToEverybody(mes)
+		if err != nil {
+			return err
+		}
+	case message.P2pSmsMesType:
+		smSProcess := SmSProcess{}
+		err := smSProcess.ForwardMesToOther(mes)
+		if err != nil {
+			return err
+		}
 	default:
 		fmt.Println("the kind of message don't exits, can't handle it")
 	}

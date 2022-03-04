@@ -1,9 +1,12 @@
 package process
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 )
+
+var buff *bufio.Reader
 
 // ShowTable 用于显示主菜单和二级菜单
 type ShowTable struct {
@@ -22,7 +25,8 @@ func (st *ShowTable) MainInterface() {
 		//接收用户选择
 		_, err := fmt.Scanf("%d\n", &choose)
 		if err != nil {
-			return
+			fmt.Println("choose error, Please entry number")
+			continue
 		}
 		//管理登录和注册
 		up := &UserProcess{}
@@ -53,45 +57,88 @@ func (st *ShowTable) MainInterface() {
 
 func (st *ShowTable) SignInMenu() {
 	var key int
-	var content string
 
+	var filePath string
 	var smsProcess *SmSProcess
 
 	for {
 		fmt.Println("\t\t\t\tCongratulations on your successful login")
 		fmt.Println("\t\t\t\t1, Displays an online list of users")
-		fmt.Println("\t\t\t\t2, Send a message")
-		fmt.Println("\t\t\t\t3, Message lists")
-		fmt.Println("\t\t\t\t4, Back To Previous Menu")
-		fmt.Println("\t\t\t\t5, Exit System")
+		fmt.Println("\t\t\t\t2, Send a message to Hall")
+		fmt.Println("\t\t\t\t3, Send a message to Personal")
+		fmt.Println("\t\t\t\t4, Message lists")
+		fmt.Println("\t\t\t\t5, Back To Previous Menu")
+		fmt.Println("\t\t\t\t6, Exit System")
 
 		fmt.Println("Please entry (1 - 5):")
-		fmt.Scanln(&key)
+		_, err := fmt.Scanln(&key)
+		if err != nil {
+			return
+		}
 		switch key {
 		case 1:
 			//fmt.Println("Displays an online list of users")
 			outputOnlineUser()
 		case 2:
+			//用输入缓冲区接收输入，不能直接用scanf或者scanln这类函数来接收,要么接收不全(空格接收不了)，要么
+			//报错fmt.Scanln(&content) error= expected newline
 			fmt.Println("Please entry content:")
-			_, err := fmt.Scanln(&content)
+			buff = bufio.NewReader(os.Stdin)
+
+			content, err := buff.ReadString('\n')
 			if err != nil {
-				return
+				fmt.Println("buff.ReadString error=", err)
 			}
+
 			err = smsProcess.SendGroupMes(content)
 			if err != nil {
+				fmt.Println("smsProcess.SendGroupMes(content) error=", err)
+				return
+			}
+		case 3:
+			var userId int
+			fmt.Println("Please entry Personal UserId:")
+			_, err := fmt.Scanln(&userId)
+			if err != nil {
+				fmt.Println("fmt.Scanln(&userId) error=", err)
+				return
+			}
+			fmt.Println("Please entry content:")
+			buff = bufio.NewReader(os.Stdin)
+
+			content, err := buff.ReadString('\n')
+			if err != nil {
+				fmt.Println("buff.ReadString error=", err)
+			}
+			err = smsProcess.SendPersonalMes(userId, content)
+			if err != nil {
+				fmt.Println("smsProcess.SendPersonalMes error=", err)
 				return
 			}
 
-		case 3:
-			fmt.Println("Message lists")
 		case 4:
+			fmt.Println("Message lists")
+			mesMan := MessageMan{}
+			fmt.Println("Please choose (1(Personal)-2(Group)):")
+			var choose int
+			_, err := fmt.Scanln(&choose)
+			if err != nil {
+				fmt.Println("fmt.Scanln(&choose) error=", err)
+				return
+			}
+			if choose == 1 {
+				filePath = "PersonalMes.txt"
+			} else if choose == 2 {
+				filePath = "GroupMes.txt"
+			}
+			mesMan.ReadMessageFromFile(filePath)
+		case 5:
 			fmt.Println("Back To Previous Menu")
 			st := ShowTable{}
 			st.MainInterface()
-		case 5:
+		case 6:
 			fmt.Println("Exit System")
 			os.Exit(0)
-
 		default:
 			fmt.Println("Your input error, Please entry right option")
 		}

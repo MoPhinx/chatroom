@@ -25,7 +25,9 @@ func updateUserStatus(scm *message.UserStateChangesMes) {
 func outputOnlineUser() {
 	//当前在线用户列表：
 	fmt.Println("List of users")
-	for id, _ := range onlineUsers {
-		fmt.Println("user id:\t", id)
+	for id, mes := range onlineUsers {
+		if mes.UserStatus == message.UserOnline {
+			fmt.Println("user id:\t", id)
+		}
 	}
 }

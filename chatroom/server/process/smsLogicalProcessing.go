@@ -11,34 +11,59 @@ import (
 type SmSProcess struct {
 }
 
-// ForwardMes 转发消息
-func (p *SmSProcess) ForwardMes(mes *message.Message) {
+// ForwardMesToEverybody  转发消息给群聊
+func (p *SmSProcess) ForwardMesToEverybody(mes *message.Message) error {
 	//遍历服务器的onlineUsers map[int]*UserProcess，将消息一个个转发出去
 
 	//取出Mes中的内容 SmsMes
 	var smsMes message.SmsMes
 	err := json.Unmarshal([]byte(mes.Data), &smsMes)
 	if err != nil {
-		return
+		return err
 	}
 
-	//序列化mes，将其
+	//序列化mes
 	data, err := json.Marshal(mes)
 	if err != nil {
 		fmt.Println("ForwardMes() json.Marshal error=", err)
-		return
+		return err
 	}
 
-	for id, up := range userManage.onlineUsers {
+	for id, up := range userManage.onlineUsersId {
 		//过滤掉自己，不要把再次消息发给自己
 		if id == smsMes.UserId {
 			continue
 		}
 		p.SendMesToEverybody(data, up.Conn)
 	}
+
+	return nil
 }
 
-func (p SmSProcess) SendMesToEverybody(mes []byte, conn net.Conn) {
+// ForwardMesToOther 转发消息给个人
+func (p *SmSProcess) ForwardMesToOther(mes *message.Message) error {
+	var p2pMes message.P2pSmsMes
+	err := json.Unmarshal([]byte(mes.Data), &p2pMes)
+	if err != nil {
+		return err
+	}
+
+	data, err := json.Marshal(mes)
+	if err != nil {
+		fmt.Println("ForwardMes() json.Marshal error=", err)
+		return err
+	}
+
+	for id, up := range userManage.onlineUsersId {
+		if id == p2pMes.UserIdByOther {
+			p.SendMesToEverybody(data, up.Conn)
+		}
+	}
+
+	return nil
+}
+
+func (p *SmSProcess) SendMesToEverybody(mes []byte, conn net.Conn) {
 	tf := utils.Transfer{
 		Conn: conn,
 	}

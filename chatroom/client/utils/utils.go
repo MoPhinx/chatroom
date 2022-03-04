@@ -31,7 +31,7 @@ func (tf *Transfer) WritePkg(data []byte) error {
 		return err
 	}
 
-	fmt.Println("server send message length success, length = ", len(data), "data = ", string(data))
+	//fmt.Println("server send message length success, length = ", len(data), "data = ", string(data))
 
 	//发送data本身
 	n, err = tf.Conn.Write(data)
@@ -49,7 +49,7 @@ func (tf *Transfer) ReadPkg() (message.Message, error) {
 	var mes message.Message
 	//获取客户端传过来的message length
 	//buf := make([]byte, 1024*4)
-	fmt.Println("read data")
+	//fmt.Println("read data")
 	n, err := tf.Conn.Read(tf.Buf[:4])
 	if err == io.EOF || err != nil {
 		fmt.Println("Client exit session")

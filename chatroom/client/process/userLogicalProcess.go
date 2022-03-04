@@ -16,19 +16,21 @@ func (up *UserProcess) SignIn() error {
 	var userId int      //UserID
 	var password string //User Password
 
-	fmt.Printf("Please entry your userId:")
+	fmt.Printf("\t\t\t\t\t\t 请输入用户Id：")
 	_, err2 := fmt.Scanln(&userId)
 	if err2 != nil {
+		fmt.Println("\t\t\t\t\t\t userId输入有误，请重新输入")
 		return err2
 	}
-	fmt.Printf("Please entry your password:")
+	fmt.Printf("\t\t\t\t\t\t 请输入用户密码：")
 	_, err3 := fmt.Scanln(&password)
 	if err3 != nil {
+		fmt.Println("\t\t\t\t\t\t password输入有误，请重新输入")
 		return err3
 	}
 
 	//连接到server
-	conn, err := net.Dial("tcp", "114.116.245.71:9999")
+	conn, err := net.Dial("tcp", "localhost:9999")
 	if err != nil {
 		fmt.Println("the net Dial error=", err)
 		return err
@@ -87,7 +89,9 @@ func (up *UserProcess) SignIn() error {
 	var loginResMes message.LoginResMes
 	err = json.Unmarshal([]byte(mes.Data), &loginResMes)
 	if loginResMes.Code == 200 {
-
+		fmt.Println()
+		fmt.Println("\t\t\t\t\t\t 恭喜你，登录成功。")
+		fmt.Println()
 		//初始化CurUser
 		CurUser.Conn = conn
 		user := &message.User{
@@ -97,12 +101,12 @@ func (up *UserProcess) SignIn() error {
 		CurUser.User = *user
 
 		//显示当前在线用户的列表
-		fmt.Println("The current online list of users is as follows:")
+		fmt.Println("\t\t\t\t\t\t 当前在线用户列表：")
 		for _, user := range loginResMes.Users {
 			if user == userId {
 				continue
 			}
-			fmt.Println("the user id = ", user)
+			fmt.Println("\t\t\t\t\t\t 当前在线用户ID：", user)
 
 			//完成onlineUsers的初始化工作
 			mUser := &message.User{
@@ -112,11 +116,18 @@ func (up *UserProcess) SignIn() error {
 			onlineUsers[user] = mUser
 		}
 
+		fmt.Println()
+
 		//启动一个协程用于与服务器端保持通讯,如果有数据推送给客户端则接收并显示
 		sp := &ServerProcess{
 			Conn: conn,
 		}
-		go sp.KeepConn()
+		go func() {
+			err := sp.KeepConn()
+			if err != nil {
+				fmt.Println("KeepConn error = ", err)
+			}
+		}()
 
 		//显示菜单
 		st := ShowTable{}
@@ -133,24 +144,27 @@ func (up *UserProcess) SignUp() error {
 	var name string     //接收username
 	var password string //接收password
 
-	fmt.Println("Please entry User Id") //获取用户Id
+	fmt.Printf("\t\t\t\t\t\t 请输入用户ID：") //获取用户Id
 	_, err := fmt.Scanln(&id)
 	if err != nil {
+		fmt.Println("用户ID输入错误，请输入正确的用户ID，", err)
 		return err
 	}
-	fmt.Println("Please entry User Name") //获取用户名
+	fmt.Printf("\t\t\t\t\t\t 请输入用户名：") //获取用户名
 	_, err = fmt.Scanln(&name)
 	if err != nil {
+		fmt.Println("用户名输入错误，请输入正确的用户名， ", err)
 		return err
 	}
-	fmt.Println("Please entry User Password") //获取密码
+	fmt.Printf("\t\t\t\t\t\t 请输入用户密码：") //获取密码
 	_, err = fmt.Scanln(&password)
 	if err != nil {
+		fmt.Println("用户密码输入错误，请输入正确的用户密码， ", err)
 		return err
 	}
 
 	//连接到server
-	conn, err := net.Dial("tcp", "114.116.245.71:9999")
+	conn, err := net.Dial("tcp", "localhost:9999")
 	if err != nil {
 		fmt.Println("the net Dial error=", err)
 		return err
@@ -215,7 +229,9 @@ func (up *UserProcess) SignUp() error {
 	var registerRes message.RegisterResMes
 	err = json.Unmarshal([]byte(mes.Data), &registerRes)
 	if registerRes.Code == 200 {
-		fmt.Println("Sign Up success, Please Sign in again")
+		fmt.Println("\t\t\t\t\t\t 注册成功！请登录")
+		fmt.Println()
+		fmt.Println()
 		showTable := ShowTable{}
 		showTable.MainInterface()
 	} else {
@@ -223,5 +239,54 @@ func (up *UserProcess) SignUp() error {
 		showTable := ShowTable{}
 		showTable.MainInterface()
 	}
+	return nil
+}
+
+// Logoff 实现注销功能
+func (up *UserProcess) Logoff(userId int) error {
+	//连接到server
+	conn, err := net.Dial("tcp", "localhost:9999")
+	if err != nil {
+		fmt.Println("the net Dial error=", err)
+		return err
+	}
+	defer func(conn net.Conn) {
+		err := conn.Close()
+		if err != nil {
+			fmt.Println("conn Close error=", err)
+		}
+	}(conn)
+
+	var mes message.Message
+	mes.MType = message.LogOffMesType
+
+	//创建RegisterMes结构体，存放用于注销的用户信息
+	user := &message.User{
+		UserId: userId,
+	}
+
+	data, err := json.Marshal(user)
+	if err != nil {
+		fmt.Println(" json.Marshal(user) error = ", err)
+		return err
+	}
+
+	mes.Data = string(data)
+
+	data, err = json.Marshal(mes)
+	if err != nil {
+		fmt.Println("json.Marshal(mes) error = ", err)
+		return err
+	}
+
+	tf := utils.Transfer{
+		Conn: conn,
+	}
+	err = tf.WritePkg(data)
+	if err != nil {
+		fmt.Println("WritePkg(data) error = ", err)
+		return err
+	}
+
 	return nil
 }

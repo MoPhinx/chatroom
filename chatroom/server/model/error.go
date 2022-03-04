@@ -4,7 +4,7 @@ import "errors"
 
 //自定义常见的错误
 var (
-	ErrUserNotExists = errors.New("user don't exists")
-	ErrUserExists    = errors.New("user already exists")
-	ErrUserPwd       = errors.New("password wrong")
+	ErrUserNotExists = errors.New("\t\t\t\t\t\t 用户不存在，请先注册！")
+	ErrUserExists    = errors.New("\t\t\t\t\t\t 用户已经存在！")
+	ErrUserPwd       = errors.New("\t\t\t\t\t\t 密码错误！")
 )

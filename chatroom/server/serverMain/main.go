@@ -24,7 +24,12 @@ func main() {
 		fmt.Println("Server Listen error=", err)
 		return
 	}
-	defer ln.Close()
+	defer func(ln net.Listener) {
+		err := ln.Close()
+		if err != nil {
+			fmt.Println("ln.Close() error = ", err)
+		}
+	}(ln)
 
 	//循环等待client连接server
 	for {
@@ -38,7 +43,12 @@ func main() {
 		p := &process.Processor{
 			Conn: conn,
 		}
-		go p.Process()
+		go func() {
+			err := p.Process()
+			if err != nil {
+				fmt.Println("Process error = ", err)
+			}
+		}()
 	}
 }
 

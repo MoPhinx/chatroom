@@ -7,11 +7,15 @@ const (
 	//注册
 	RegisterMesType    = "RegisterMes"
 	RegisterResMesType = "RegisterResMes"
+	//注销
+	LogOffMesType    = "LogOffMes"
+	LogOffResMesType = "LogOffResMes"
 	//用户状态
 	UserStateChangesMesType = "UserStateChangesMes"
 	//聊天
 	SmsMesType    = "SmsMes"    //群聊
 	P2pSmsMesType = "P2pSmsMes" //点对点
+
 )
 
 //用户状态常量
@@ -56,11 +60,19 @@ type RegisterResMes struct {
 	Error string `json:"error"` // 返回错误信息
 }
 
+// LogOffMes  用于用户注销的message
+type LogOffMes struct {
+	User
+}
+
+// LogOffResMes server回复注销的Message
+type LogOffResMes struct {
+}
+
 // UserStateChangesMes  配合服务器端推送用户状态变化的Message
 type UserStateChangesMes struct {
-	UserId   int    `json:"user_id"`   // 用户Id
-	UserName string `json:"user_name"` // 用户名
-	Status   int    `json:"status"`    //用户状态
+	UserId int `json:"user_id"` // 用户Id
+	Status int `json:"status"`  //用户状态
 }
 
 // SmsMes 群聊消息类型 //发送的message

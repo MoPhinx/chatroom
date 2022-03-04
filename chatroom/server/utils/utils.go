@@ -31,7 +31,7 @@ func (tf *Transfer) WritePkg(data []byte) error {
 		return err
 	}
 
-	fmt.Println("server send message length success, length = ", len(data), "data = ", string(data))
+	//fmt.Println("server send message length success, length = ", len(data), "data = ", string(data))
 
 	//发送data本身
 	n, err = tf.Conn.Write(data)

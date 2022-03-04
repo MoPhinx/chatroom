@@ -16,19 +16,42 @@ type UserProcess struct {
 	UserId int //表明该Coon是哪个用户的
 }
 
-// UserStateChanges 通知所有在线用户的func
-func (p *UserProcess) UserStateChanges(userId int) {
+// UserStateChangesOnline 通知所有在线用户的func
+func (p *UserProcess) UserStateChangesOnline(userId int) error {
 	//userManage.UpdateUM()
 	//遍历onlineusers，然后一个个发送UserStateChangesMes
 	for id, up := range userManage.onlineUsersId {
 		if id == userId {
 			continue
 		}
-		up.UserState(userId)
+		err := up.UserStateOnline(userId)
+		if err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
-func (up *UserProcess) UserState(userId int) {
+// UserStateChangesOffline 通知所有在线用户的func
+func (p *UserProcess) UserStateChangesOffline(userId int) error {
+	//userManage.UpdateUM()
+	//遍历onlineusers，然后一个个发送UserStateChangesMes
+	for id, up := range userManage.onlineUsersId {
+		if id == userId {
+			continue
+		}
+		err := up.UserStateOffline(userId)
+		if err != nil {
+			fmt.Println("UserStateOffline error = ", err)
+			return err
+		}
+	}
+	return nil
+}
+
+// UserStateOnline 改变状态为online
+func (up *UserProcess) UserStateOnline(userId int) error {
 
 	//组装message
 	var mes message.Message
@@ -42,7 +65,7 @@ func (up *UserProcess) UserState(userId int) {
 	data, err := json.Marshal(&userStateChangesMes)
 	if err != nil {
 		fmt.Println("json marshal error = ", err)
-		return
+		return err
 	}
 	mes.Data = string(data)
 
@@ -50,7 +73,7 @@ func (up *UserProcess) UserState(userId int) {
 	data, err = json.Marshal(&mes)
 	if err != nil {
 		fmt.Println("json.Marshal error= ", err)
-		return
+		return err
 	}
 
 	//发送mes
@@ -60,19 +83,60 @@ func (up *UserProcess) UserState(userId int) {
 
 	err = tf.WritePkg(data)
 	if err != nil {
-		fmt.Println("UserStateChanges error = ", err)
-		return
+		fmt.Println("UserStateChangesOnline error = ", err)
+		return err
 	}
+	return nil
+}
+
+// UserStateOffline 改变状态为offline
+func (up *UserProcess) UserStateOffline(userId int) error {
+
+	//组装message
+	var mes message.Message
+	mes.MType = message.UserStateChangesMesType
+
+	var userStateChangesMes message.UserStateChangesMes
+	userStateChangesMes.UserId = userId
+	userStateChangesMes.Status = message.UserOffline
+
+	//将userStateChangesMes消息序列化存到mes.data里面
+	data, err := json.Marshal(&userStateChangesMes)
+	if err != nil {
+		fmt.Println("json marshal error = ", err)
+		return err
+	}
+	mes.Data = string(data)
+
+	//将mes序列化
+	data, err = json.Marshal(&mes)
+	if err != nil {
+		fmt.Println("json.Marshal error= ", err)
+		return err
+	}
+
+	//发送mes
+	tf := utils.Transfer{
+		Conn: up.Conn,
+	}
+
+	err = tf.WritePkg(data)
+	if err != nil {
+		fmt.Println("UserStateChangesOnline error = ", err)
+		return err
+	}
+
+	return nil
 }
 
 // ProcessLogin 处理用户登录逻辑
-func (up *UserProcess) ProcessLogin(mes *message.Message) (err error) {
+func (up *UserProcess) ProcessLogin(mes *message.Message) error {
 	//反序列化loginMes
 	var loginMes message.LoginMes
-	err = json.Unmarshal([]byte(mes.Data), &loginMes)
+	err := json.Unmarshal([]byte(mes.Data), &loginMes)
 	if err != nil {
 		fmt.Println("json.Unmarshal fail err=", err)
-		return
+		return err
 	}
 
 	//声明一个用于服务器端回复的message
@@ -97,14 +161,18 @@ func (up *UserProcess) ProcessLogin(mes *message.Message) (err error) {
 		}
 	} else {
 		loginResMes.Code = 200
-		fmt.Println(user.UserName, "SignIn success")
+		fmt.Println(user.UserName, "\t\t\t\t\t\t 登录成功")
 
 		//将登录成功的用户的UserId赋值给 up
 		up.UserId = loginMes.UserId
 		//用户登录成功，把该登陆成功的用户放到UserManage的onlineUsers中
 		userManage.AddOnlineUser(up)
 		//通知其它用户，有人上线了，并发送更新的上线列表
-		up.UserStateChanges(loginMes.UserId)
+		err := up.UserStateChangesOnline(loginMes.UserId)
+		if err != nil {
+			fmt.Println("UserStateChangesOnline error = ", err)
+			return err
+		}
 		//将登录成功的用户的Id放入到loginResMes.Users 切片中
 		for id, _ := range userManage.onlineUsersId {
 			loginResMes.Users = append(loginResMes.Users, id)
@@ -115,14 +183,14 @@ func (up *UserProcess) ProcessLogin(mes *message.Message) (err error) {
 	data, err := json.Marshal(loginResMes)
 	if err != nil {
 		fmt.Println("json.Marshal error=", err)
-		return
+		return err
 	}
 
 	resMes.Data = string(data)
 	data, err = json.Marshal(resMes)
 	if err != nil {
 		fmt.Println("json.Marshal error=", err)
-		return
+		return err
 	}
 
 	//发送data给client
@@ -130,7 +198,7 @@ func (up *UserProcess) ProcessLogin(mes *message.Message) (err error) {
 		Conn: up.Conn,
 	}
 	err = tf.WritePkg(data)
-	return
+	return nil
 }
 
 // ProcessReg 处理用户注册逻辑
@@ -186,5 +254,16 @@ func (up *UserProcess) ProcessReg(mes *message.Message) error {
 	}
 	err = tf.WritePkg(data)
 
+	return nil
+}
+
+func (up *UserProcess) ProcessLogOff() error {
+	userManage.DelOnlineUser(up)
+	//fmt.Println(userManage.onlineUsersId)
+	err := up.UserStateChangesOffline(up.UserId)
+	if err != nil {
+		fmt.Println("UserStateChangesOffline error = ", err)
+		return err
+	}
 	return nil
 }

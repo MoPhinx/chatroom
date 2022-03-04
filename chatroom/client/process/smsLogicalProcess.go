@@ -51,6 +51,8 @@ func (p *SmSProcess) SendGroupMes(content string) error {
 		fmt.Println("SendGroupMes WritePkg error=", err)
 		return err
 	}
+	fmt.Println("\t\t\t\t\t\t 消息发送成功！")
+	fmt.Println()
 
 	//将自己发送的消息存储起来
 	str := "me: " + content
@@ -99,6 +101,7 @@ func (p *SmSProcess) SendPersonalMes(userIdByOther int, content string) error {
 	//将mes序列化
 	data, err = json.Marshal(mes)
 	if err != nil {
+		fmt.Println("json.Marshal error = ", err)
 		return err
 	}
 
@@ -112,6 +115,8 @@ func (p *SmSProcess) SendPersonalMes(userIdByOther int, content string) error {
 		return err
 	}
 
+	fmt.Println("\t\t\t\t\t\t 消息已发送出去")
+	fmt.Println()
 	//将自己发送的消息存储起来
 	str := "me: " + content
 	mesMan := MessageMan{}

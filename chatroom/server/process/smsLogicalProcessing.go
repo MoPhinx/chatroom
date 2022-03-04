@@ -19,6 +19,7 @@ func (p *SmSProcess) ForwardMesToEverybody(mes *message.Message) error {
 	var smsMes message.SmsMes
 	err := json.Unmarshal([]byte(mes.Data), &smsMes)
 	if err != nil {
+		fmt.Println("json.Unmarshal error = ", err)
 		return err
 	}
 
@@ -34,7 +35,11 @@ func (p *SmSProcess) ForwardMesToEverybody(mes *message.Message) error {
 		if id == smsMes.UserId {
 			continue
 		}
-		p.SendMesToEverybody(data, up.Conn)
+		err := p.SendMesToEverybody(data, up.Conn)
+		if err != nil {
+			fmt.Println("SendMesToEverybody error = ", err)
+			return err
+		}
 	}
 
 	return nil
@@ -45,6 +50,7 @@ func (p *SmSProcess) ForwardMesToOther(mes *message.Message) error {
 	var p2pMes message.P2pSmsMes
 	err := json.Unmarshal([]byte(mes.Data), &p2pMes)
 	if err != nil {
+		fmt.Println("Unmarshal error = ", err)
 		return err
 	}
 
@@ -56,20 +62,26 @@ func (p *SmSProcess) ForwardMesToOther(mes *message.Message) error {
 
 	for id, up := range userManage.onlineUsersId {
 		if id == p2pMes.UserIdByOther {
-			p.SendMesToEverybody(data, up.Conn)
+			err := p.SendMesToEverybody(data, up.Conn)
+			if err != nil {
+				fmt.Println("SendMesToEverybody error = ", err)
+				return err
+			}
 		}
 	}
 
 	return nil
 }
 
-func (p *SmSProcess) SendMesToEverybody(mes []byte, conn net.Conn) {
+func (p *SmSProcess) SendMesToEverybody(mes []byte, conn net.Conn) error {
 	tf := utils.Transfer{
 		Conn: conn,
 	}
 	err := tf.WritePkg(mes)
 	if err != nil {
 		fmt.Println("WritePkg Forward message error=", err)
-		return
+		return err
 	}
+
+	return err
 }

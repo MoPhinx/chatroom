@@ -1,6 +1,7 @@
 package process
 
 import (
+	"encoding/json"
 	"fmt"
 	"happiness999.cn/chatroom/server/utils"
 	"happiness999.cn/chatroom/server/utils/message"
@@ -12,7 +13,7 @@ type Processor struct {
 }
 
 // Process 不断读取客户端发来的TCP字节流
-func (p *Processor) Process() {
+func (p *Processor) Process() error {
 	defer func(Conn net.Conn) {
 		err := Conn.Close()
 		if err != nil {
@@ -28,7 +29,7 @@ func (p *Processor) Process() {
 		mes, err := tf.ReadPkg()
 		if err != nil {
 			fmt.Println("readPkg error=", err)
-			return
+			return err
 		}
 
 		//fmt.Println("message=", mes)
@@ -36,7 +37,7 @@ func (p *Processor) Process() {
 		err = p.KindOfMes(&mes)
 		if err != nil {
 			fmt.Println("KindOfMes error=", err)
-			return
+			return err
 		}
 	}
 }
@@ -62,14 +63,33 @@ func (p *Processor) KindOfMes(mes *message.Message) (err error) {
 		smSProcess := SmSProcess{}
 		err := smSProcess.ForwardMesToEverybody(mes)
 		if err != nil {
-			return err
+			fmt.Println("ForwardMesToEverybody(mes) error = ", err)
 		}
 	case message.P2pSmsMesType:
 		smSProcess := SmSProcess{}
 		err := smSProcess.ForwardMesToOther(mes)
 		if err != nil {
+			fmt.Println("ForwardMesToOther(mes) error = ", err)
+		}
+	case message.LogOffMesType:
+		fmt.Println(mes)
+		var logOffMes message.LogOffMes
+		err := json.Unmarshal([]byte(mes.Data), &logOffMes)
+		if err != nil {
+			fmt.Println("Unmarshal error = ", err)
 			return err
 		}
+
+		up := &UserProcess{
+			//Conn: p.Conn,
+			UserId: logOffMes.UserId,
+		}
+		fmt.Println(up)
+		err = up.ProcessLogOff()
+		if err != nil {
+			fmt.Println("up.ProcessLogOff(mes) error = ", err)
+		}
+
 	default:
 		fmt.Println("the kind of message don't exits, can't handle it")
 	}

@@ -13,7 +13,7 @@ type ServerProcess struct {
 }
 
 // KeepConn 和服务器端保持连接
-func (sp *ServerProcess) KeepConn() {
+func (sp *ServerProcess) KeepConn() error {
 	tf := &utils.Transfer{
 		Conn: sp.Conn,
 	}
@@ -22,7 +22,7 @@ func (sp *ServerProcess) KeepConn() {
 		mes, err := tf.ReadPkg()
 		if err != nil {
 			fmt.Println("tf.ReadPkg error=", err)
-			return
+			return err
 		}
 		//如果读到新的message，则进行下一步处理
 		switch mes.MType {
@@ -32,21 +32,25 @@ func (sp *ServerProcess) KeepConn() {
 			err := json.Unmarshal([]byte(mes.Data), &userStateChangeMes)
 			if err != nil {
 				fmt.Println("json.Unmarshal error=", err)
-				return
+				continue
 			}
 			//把这个用户的信息，状态保存到客户map[int]*User中
 			updateUserStatus(&userStateChangeMes)
 		case message.SmsMesType: //群发消息
-			outputGroupMes(&mes)
+			err := outputGroupMes(&mes)
+			if err != nil {
+				fmt.Println("outputGroupMes error=", err)
+				continue
+			}
 		case message.P2pSmsMesType:
 			err := outputPersonalMes(&mes)
 			if err != nil {
 				fmt.Println("outputPersonalMes error=", err)
-				return
+				continue
 			}
 		default:
 			fmt.Println("Unknown message type")
 		}
-		fmt.Println("mes=", mes)
+		//fmt.Println("mes=", mes)
 	}
 }

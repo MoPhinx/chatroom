@@ -7,7 +7,7 @@ import (
 )
 
 var onlineUsers map[int]*message.User = make(map[int]*message.User, 10)
-var CurUser model.CurUser //登录成功后完成对CurUser的初始化
+var CurUser model.CurUser //localhost后完成对CurUser的初始化
 
 //处理返回的UserStateChangesMes
 func updateUserStatus(scm *message.UserStateChangesMes) {
@@ -24,10 +24,10 @@ func updateUserStatus(scm *message.UserStateChangesMes) {
 //显示当前在线用户
 func outputOnlineUser() {
 	//当前在线用户列表：
-	fmt.Println("List of users")
 	for id, mes := range onlineUsers {
 		if mes.UserStatus == message.UserOnline {
-			fmt.Println("user id:\t", id)
+			fmt.Println("\t\t\t\t\t\t 当前在线用户ID:\t", id)
 		}
 	}
+	fmt.Println()
 }
